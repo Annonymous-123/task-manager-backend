@@ -18,19 +18,34 @@ const pool = new Pool({
 });
 app.use(
   cors({
-    origin:process.env.FRONTEND_URL, // your frontend URL
+    origin:
+      'https://vitereacttailwindcss4wk9vzzt-at5w--3000--6e337437.local-credentialless.webcontainer.io/', // your frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   })
 );
-app.get('/', async (req, res) => {
-  const result = await pool.query(`Select * from tasks`);
-  console.log(result.rows);
-  res.json(result.rows);
+app.get('/tasks/', async (req, res) => {
+  try {
+    const result = await pool.query(`Select * from tasks`);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
-app.get('/test', (req, res) => {
-  res.send('Test route is working!');
+app.post('/tasks/', async (req, res) => {
+  try {
+    const task = res.body.task;
+    const result = await pool.query(
+      `Insert into tasks (task) values ($1) returning *`,
+      [task]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 app.listen(port, () => {
