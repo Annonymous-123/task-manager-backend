@@ -18,8 +18,7 @@ const pool = new Pool({
 });
 app.use(
   cors({
-    origin:
-      'https://vitereacttailwindcss4wk9vzzt-at5w--3000--6e337437.local-credentialless.webcontainer.io/', // your frontend URL
+    origin:process.env.FRONTEND_URL, // your frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   })
