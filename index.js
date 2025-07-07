@@ -35,7 +35,7 @@ app.get('/tasks/', async (req, res) => {
 
 app.post('/tasks/', async (req, res) => {
   try {
-    const task = res.body.task;
+    const task = req.body.task;
     const result = await pool.query(
       `Insert into tasks (task) values ($1) returning *`,
       [task]
