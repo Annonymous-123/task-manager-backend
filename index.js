@@ -62,6 +62,18 @@ app.delete('/tasks/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+app.patch('/tasks/:id', async (req, res) => {
+  try {
+    result = await pool.query(
+      `Update task set completed=$1 where id=$2 returning *`,
+      [req.body.check, req.params.id]
+    );
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 app.listen(port, () => {
   console.log(`Server running in port ${port}`);
 });
