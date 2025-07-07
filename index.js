@@ -65,7 +65,7 @@ app.delete('/tasks/:id', async (req, res) => {
 app.patch('/tasks/:id', async (req, res) => {
   try {
     result = await pool.query(
-      `Update task set completed=$1 where id=$2 returning *`,
+      `Update tasks set completed=$1 where id=$2 returning *`,
       [req.body.check, req.params.id]
     );
     res.status(200).json(result.rows[0]);
