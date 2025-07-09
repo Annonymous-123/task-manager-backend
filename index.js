@@ -25,11 +25,19 @@ app.use(
     credentials: true,
   })
 );
-app.post('/login/', async (req, res) => {
+app.post('/register/', async (req, res) => {
   try {
+    console.log('Received body:', req.body)
     const username = req.body.user.username;
     const password = req.body.user.password;
+    console.log(password);
+    console.log(username);
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+if (!username || !password) {
+  return res.status(400).json({ error: 'Username and password are required' });
+}
+
     const result = await pool.query(
       `Insert into task_manager_users (username,password) values ($1,$2) returning*`,
       [username, hashedPassword]
