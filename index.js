@@ -2,12 +2,14 @@ import express from 'express';
 import pg from 'pg';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import Result from 'pg/lib/result';
+import bcrypt from 'bcrypt';
 
 const app = express();
 const port = 3000;
 app.use(express.json());
 const { Pool } = pg;
-
+const saltRounds = 10;
 dotenv.config();
 
 const pool = new Pool({
@@ -18,11 +20,27 @@ const pool = new Pool({
 });
 app.use(
   cors({
-    origin:process.env.FRONTEND_URL, // your frontend URL
+    origin: process.env.FRONTEND_URL, // your frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   })
 );
+app.post('/login/', async (req, res) => {
+  try {
+    const username = req.body.user.username;
+    const password = req.body.user.password;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const result = await pool.query(
+      `Insert into task_manager_users (username,password) values ($1,$2) returning*`,
+      [username, hashedPassword]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+//fetch the tasks from database
 app.get('/tasks/', async (req, res) => {
   try {
     const result = await pool.query(`Select * from tasks`);
@@ -32,7 +50,7 @@ app.get('/tasks/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+//adding tasks to db
 app.post('/tasks/', async (req, res) => {
   try {
     const task = req.body.task;
@@ -46,6 +64,7 @@ app.post('/tasks/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+//deleting tasks from db
 app.delete('/tasks/:id', async (req, res) => {
   try {
     const id = req.params.id;
@@ -53,18 +72,19 @@ app.delete('/tasks/:id', async (req, res) => {
       `Delete from tasks where id=$1 returning *`,
       [id]
     );
-  if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
     res.status(200).json(result.rows[0]);
   } catch (err) {
     console.error('Error', err.message);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+//changing status of tasks in db
 app.patch('/tasks/:id', async (req, res) => {
   try {
-   const result = await pool.query(
+    const result = await pool.query(
       `Update tasks set completed=$1 where id=$2 returning *`,
       [req.body.check, req.params.id]
     );
@@ -74,6 +94,7 @@ app.patch('/tasks/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 app.listen(port, () => {
   console.log(`Server running in port ${port}`);
 });
