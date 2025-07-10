@@ -71,13 +71,17 @@ app.post('/login/', async (req, res) => {
     if (result.rows.length === 0) {
       res.status(401).json({ error: 'Invalid Credentials' });
     } else {
-      const storedHashedPassword = result.rows[0].password;
+      const user = result.rows[0];
+      const storedHashedPassword = user.password;
       const isMatch = await bcrypt.compare(
         passwordEntered,
         storedHashedPassword
       );
       if (isMatch) {
-        res.status(200).json({ message: ' Login Successful' });
+        res.status(200).json({
+          message: ' Login Successful',
+          user: { id: user.id, username: user.username },
+        });
       } else {
         res.status(401).json({ error: 'Invalid Credentials' });
       }
@@ -90,7 +94,10 @@ app.post('/login/', async (req, res) => {
 //fetch the tasks from database
 app.get('/tasks/', async (req, res) => {
   try {
-    const result = await pool.query(`Select * from tasks`);
+    const userId = req.query.user_id;
+    const result = await pool.query(`Select * from tasks where user_id=$1`, [
+      userId,
+    ]);
     res.json(result.rows);
   } catch (err) {
     console.error('Error', err.message);
@@ -101,9 +108,10 @@ app.get('/tasks/', async (req, res) => {
 app.post('/tasks/', async (req, res) => {
   try {
     const task = req.body.task;
+    const userId = req.body.user_id;
     const result = await pool.query(
       `Insert into tasks (task) values ($1) returning *`,
-      [task]
+      [task, userId]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
