@@ -25,7 +25,7 @@ app.use(
     credentials: true,
   })
 );
-//Adding new user
+//Registering new user
 app.post('/register/', async (req, res) => {
   try {
     const username = req.body.username;
@@ -43,8 +43,9 @@ app.post('/register/', async (req, res) => {
     );
 
     if (result.rows.length > 0) {
-      return res.status(409).json({ error: 'User already registered. Please login.' });
-
+      return res
+        .status(409)
+        .json({ error: 'User already registered. Please login.' });
     } else {
       const result1 = await pool.query(
         `Insert into task_manager_users (username,password) values ($1,$2) returning*`,
@@ -54,6 +55,34 @@ app.post('/register/', async (req, res) => {
     }
   } catch (err) {
     console.error('Error', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+//logging user
+app.post('/login/', async (req, res) => {
+  try {
+    const usernameEntered = req.body.username;
+    const passwordEntered = req.body.password;
+    const result = await pool.query(
+      `Select * from task_manager_users where username=$1`,
+      [usernameEntered]
+    );
+    if (result.rows.length === 0) {
+      res.status(401).json({ error: 'Invalid Credentials' });
+    } else {
+      const storedHashedPassword = result.rows[0].password;
+      const isMatch = await bcrypt.compare(
+        passwordEntered,
+        storedHashedPassword
+      );
+      if (isMatch) {
+        res.status(200).json({ message: ' Login Successful' });
+      } else {
+        res.status(401).json({ error: 'Invalid Credentials' });
+      }
+    }
+  } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
