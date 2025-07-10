@@ -25,29 +25,39 @@ app.use(
     credentials: true,
   })
 );
+//Adding new user
 app.post('/register/', async (req, res) => {
   try {
-    console.log('Received body:', req.body)
-    const username = req.body.user.username;
-    const password = req.body.user.password;
-    console.log(password);
-    console.log(username);
+    const username = req.body.username;
+    const password = req.body.password;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    
-if (!username || !password) {
-  return res.status(400).json({ error: 'Username and password are required' });
-}
 
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ error: 'Username and password are required' });
+    }
     const result = await pool.query(
-      `Insert into task_manager_users (username,password) values ($1,$2) returning*`,
-      [username, hashedPassword]
+      `Select * from task_manager_users where username=$1`,
+      [username]
     );
-    res.status(201).json(result.rows[0]);
+
+    if (result.rows.length > 0) {
+      return res.status(409).json({ error: 'User already registered. Please login.' });
+
+    } else {
+      const result1 = await pool.query(
+        `Insert into task_manager_users (username,password) values ($1,$2) returning*`,
+        [username, hashedPassword]
+      );
+      res.status(201).json(result1.rows[0]);
+    }
   } catch (err) {
     console.error('Error', err.message);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 //fetch the tasks from database
 app.get('/tasks/', async (req, res) => {
   try {
