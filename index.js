@@ -50,8 +50,8 @@ app.post('/register/', async (req, res) => {
       const result1 = await pool.query(
         `Insert into task_manager_users (username,password) values ($1,$2) returning*`,
         [username, hashedPassword]
-        const newUser=result1.rows[0];
       );
+      const newUser = result1.rows[0];
       res.status(201).json(result1.rows[0]);
     }
   } catch (err) {
