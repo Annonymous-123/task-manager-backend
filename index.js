@@ -6,7 +6,8 @@ import Result from 'pg/lib/result';
 import bcrypt from 'bcrypt';
 
 const app = express();
-const port = 3000;
+//const port = 3000;
+const port = process.env.PORT || 3000;
 app.use(express.json());
 const { Pool } = pg;
 const saltRounds = 10;
